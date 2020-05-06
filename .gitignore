@@ -1,0 +1,6 @@
+node_modules
+.cache
+dist
+img
+package-lock.json
+.vscode

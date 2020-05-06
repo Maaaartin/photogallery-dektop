@@ -1,0 +1,15 @@
+{
+	"text/typescript": {
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"jsx": "react",
+		"strict": true,
+
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"lib": [
+			"es2015",
+			"dom"
+		]
+	}
+}
