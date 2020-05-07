@@ -1,6 +1,7 @@
 ﻿import { Request } from 'express';
 import { Fields } from 'formidable';
 import * as Jimp from 'jimp';
+import { IpcRenderer } from 'electron';
 
 export interface Gallery {
     files: string[];
@@ -40,4 +41,8 @@ export interface UploadFormFields extends Fields {
 
 export interface NameJimp extends Jimp {
     name: string
+}
+
+export interface MainWindow {
+    ipc: IpcRenderer
 }

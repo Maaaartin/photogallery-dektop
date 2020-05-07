@@ -58,4 +58,4 @@ const startServer = (callback: Function) => {
     });
 }
 
-export default startServer;
+export default app;

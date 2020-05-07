@@ -1,5 +1,6 @@
-import { app, BrowserWindow } from 'electron';
-import startServer from './server';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { default as express } from './server';
+import { Server } from 'http';
 //import {enableLiveReload} from 'electron-compile';
 
 //enableLiveReload();
@@ -8,9 +9,29 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow;
+let server: Server;
+
+function createServer(port: number): Server {
+  return express.listen(port, () => console.log('Express server listening on port ' + port));
+}
 
 function createMainWindow(): BrowserWindow {
-  const window = new BrowserWindow()
+  const window = new BrowserWindow();
+
+  window.webContents.on('did-finish-load', () => {
+    ipcMain.on('changePort', (event, data) => {
+      server.close(() => {
+        console.log('Server closed');
+        server = createServer(data.port);
+      });
+
+    })
+    window.webContents.send('test', { data: 'test' });
+  });
+
+  // ipcRenderer.on('changePort', (event, data) => {
+  //   console.log(data);
+  // })
 
   if (isDevelopment) {
     window.webContents.openDevTools()
@@ -29,6 +50,7 @@ function createMainWindow(): BrowserWindow {
       window.focus()
     })
   })
+
 
   return window
 }
@@ -51,9 +73,6 @@ app.on('activate', () => {
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
   mainWindow = createMainWindow();
+  server = createServer(express.get('port'));
 });
 
-
-startServer((server) => {
-
-})
