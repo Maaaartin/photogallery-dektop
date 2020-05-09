@@ -1,32 +1,50 @@
 import * as React from 'react';
-import { MainWindow } from '../interfaces';
+import { Row, Col } from 'react-flexbox-grid';
+import { MainWindowProps, MainWindowState } from '../interfaces';
+import { IpcMessage } from '../constants';
 
-class Index extends React.Component<MainWindow, any>{
-    constructor(params: Readonly<MainWindow>) {
+class Index extends React.Component<MainWindowProps, MainWindowState>{
+    constructor(params: Readonly<MainWindowProps>) {
         super(params);
         const { ipc } = this.props;
 
         this.state = {
-            port: 80
-        }
+            port: 80,
+            status: '',
+            runnning: false
+        };
 
-        ipc.on('test', (event, data) => {
-            console.log(data);
-        });
+        ipc.on(IpcMessage.UPDATE_STATUS, (event, data: MainWindowState) => {
+            this.setState(data);
+        })
     }
 
-    handleClick = () => {
+    handleChangeClick = () => {
         const { ipc } = this.props;
         const { port } = this.state;
-        ipc.send('changePort', { port });
+        ipc.send(IpcMessage.CHANGE_PORT, { port });
+    }
+
+    handleStartClick = () => {
+        const { ipc } = this.props;
+        ipc.send(IpcMessage.START_SERVER);
+    }
+
+    handleStopClick = () => {
+        const { ipc } = this.props;
+        ipc.send(IpcMessage.STOP_SERVER);
     }
 
     render() {
-        const { port } = this.state;
+        const { port, status, runnning } = this.state;
         return (
-            <div>hello
-                <input type='number' value={port} onChange={e => this.setState({ port: e.target.value })} />
-                <button type='button' onClick={this.handleClick}> change</button>
+            <div>
+                <p>{`Server running: ${runnning}`}</p>
+                <p>{status}</p>
+                <input type='number' value={port} onChange={e => this.setState({ port: Number(e.target.value) })} />
+                <button type='button' onClick={this.handleChangeClick}>change</button>
+                <button type='button' onClick={this.handleStartClick}>start</button>
+                <button type='button' onClick={this.handleStopClick}>stop</button>
             </div>
         );
     }

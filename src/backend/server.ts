@@ -51,11 +51,4 @@ app.use((err: any, req, res, next) => {
 
 app.set('port', process.env.PORT || 80);
 
-const startServer = (callback: Function) => {
-    const server = app.listen(app.get('port'), function () {
-        console.log('Express server listening on port ' + app.get('port'));
-        callback(server);
-    });
-}
-
 export default app;

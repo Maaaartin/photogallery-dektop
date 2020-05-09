@@ -43,6 +43,12 @@ export interface NameJimp extends Jimp {
     name: string
 }
 
-export interface MainWindow {
+export interface MainWindowProps {
     ipc: IpcRenderer
+}
+
+export interface MainWindowState {
+    port?: number,
+    status?: string,
+    runnning?: boolean
 }
