@@ -1,7 +1,27 @@
 import * as React from 'react';
-import { Row, Col } from 'react-flexbox-grid';
+import { Grid, Col, Row } from 'react-styled-flexboxgrid';
+import styled from 'styled-components';
 import { MainWindowProps, MainWindowState } from '../interfaces';
 import { IpcMessage } from '../constants';
+
+const Button = styled.button`
+background-color: blue;
+border: none;
+color: white;
+padding: 10px 20px;
+text-align: center;
+text-decoration: none;
+display: inline-block;
+font-size: 16px;
+margin: 4px 2px;
+cursor: pointer;
+border-radius: 8px;
+transition-duration: 0.4s;
+:hover {
+    background-color: #a1c2f0; 
+    color: white;
+}
+`;
 
 class Index extends React.Component<MainWindowProps, MainWindowState>{
     constructor(params: Readonly<MainWindowProps>) {
@@ -36,16 +56,32 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
     }
 
     render() {
-        const { port, status, runnning } = this.state;
+        const { port, status, runnning } = this.state
         return (
-            <div>
-                <p>{`Server running: ${runnning}`}</p>
-                <p>{status}</p>
-                <input type='number' value={port} onChange={e => this.setState({ port: Number(e.target.value) })} />
-                <button type='button' onClick={this.handleChangeClick}>change</button>
-                <button type='button' onClick={this.handleStartClick}>start</button>
-                <button type='button' onClick={this.handleStopClick}>stop</button>
-            </div>
+            <Grid>
+                <Row>
+                    <Col xs={6}><span>{`Server running: ${runnning}`}</span></Col>
+                    <Col xs={6}>
+                        <span>{status}</span>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col xs={6}>
+                        <label >Port: </label>
+                    </Col>
+                    <Col xs={6}>
+                        <input type='number' value={port} onChange={e => this.setState({ port: Number(e.target.value) })} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Col xs={4}>
+                        <Button type='button' onClick={this.handleChangeClick}>change</Button>
+                        {/* <button type='button' onClick={this.handleChangeClick}>change</button> */}
+                    </Col>
+                    <Col xs={4}><Button type='button' onClick={this.handleStopClick}>stop</Button></Col>
+                    <Col xs={4}><Button type='button' onClick={this.handleStartClick}>start</Button></Col>
+                </Row>
+            </Grid>
         );
     }
 }
