@@ -4,5 +4,6 @@ export enum IpcMessage {
     START_SERVER = 'startServer',
     STOP_SERVER = 'stopServer',
     CHANGE_PORT = 'changePort',
-    UPDATE_STATUS = 'updateStatus'
+    UPDATE_STATUS = 'updateStatus',
+    OPEN_BROWSER = 'openBrowser';
 };

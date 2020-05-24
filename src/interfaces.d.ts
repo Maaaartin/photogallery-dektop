@@ -48,7 +48,8 @@ export interface MainWindowProps {
 }
 
 export interface MainWindowState {
-    port?: number,
+    setPort?: number,
+    servePort?: number,
     status?: string,
     runnning?: boolean
 }

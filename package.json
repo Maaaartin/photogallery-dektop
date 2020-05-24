@@ -24,6 +24,7 @@
     "jade": "^1.11.0",
     "jimp": "^0.10.3",
     "lodash": "^4.17.15",
+    "open": "^7.0.3",
     "path": "^0.12.7",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -47,9 +48,12 @@
     "electron-compilers": "^5.9.0"
   },
   "build": {
-    "electronCompile": false
-  },
-  "win": {
-    "icon": "build/icon.ico"
+    "electronCompile": false,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    }
   }
 }

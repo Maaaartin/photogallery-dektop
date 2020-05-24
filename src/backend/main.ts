@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { Server } from 'http';
+import * as open from 'open';
+
 import { default as express } from './server';
 import { MainWindowState } from '../interfaces';
 import { isDevelopment, IpcMessage } from '../constants';
@@ -10,13 +12,17 @@ import { isDevelopment, IpcMessage } from '../constants';
 let mainWindow: BrowserWindow;
 let server: Server;
 
+function openBrowser() {
+  open(`http://localhost:${server.address().port}`);
+}
+
 function send(channel: IpcMessage, message: MainWindowState): void {
   if (mainWindow) mainWindow.webContents.send(channel, message);
 };
 
 function serverSuccessHandler(result: Server, message: string): void {
   server = result;
-  send(IpcMessage.UPDATE_STATUS, { status: message, runnning: true });
+  send(IpcMessage.UPDATE_STATUS, { status: message, runnning: true, servePort: server.address().port });
 }
 
 function serverErrorHandler(err: Error): void {
@@ -39,18 +45,22 @@ function createServer(port?: number): Promise<Server> {
 };
 
 function createMainWindow(): BrowserWindow {
-  const window = new BrowserWindow();
+  const window = new BrowserWindow({
+    width: 600,
+    height: 240,
+    maximizable: false,
+    resizable: false
+  });
 
-  if (isDevelopment) {
-    window.webContents.openDevTools();
-  }
+  // window.webContents.openDevTools();
 
   window.loadFile('src/frontend/index.html');
 
   window.webContents.on('did-finish-load', () => {
     send(IpcMessage.UPDATE_STATUS, {
       status: server ? 'Server started' : 'Server not running',
-      runnning: !!server
+      runnning: !!server,
+      servePort: server && server.address().port
     });
   });
 
@@ -69,7 +79,7 @@ function createMainWindow(): BrowserWindow {
       server.close(() => {
         console.log('Server closed');
         send(IpcMessage.UPDATE_STATUS, { status: 'Server closed', runnning: false });
-        createServer(data.port)
+        createServer(data.setPort)
           .then(result => serverSuccessHandler(result, 'Server started with changed port'))
           .catch(serverErrorHandler);
       });
@@ -94,7 +104,24 @@ function createMainWindow(): BrowserWindow {
     }
   });
 
+  ipcMain.on(IpcMessage.OPEN_BROWSER, (event, data) => {
+    if (server) openBrowser();
+  });
+
   return window;
+}
+
+// Force Single Instance Application
+const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+})
+console.log(shouldQuit);
+if (shouldQuit) {
+  app.quit();
 }
 
 // quit application when all windows are closed
@@ -118,6 +145,7 @@ app.on('ready', () => {
   createServer()
     .then((result) => {
       server = result;
+      openBrowser();
     })
     .catch(serverErrorHandler);
 });

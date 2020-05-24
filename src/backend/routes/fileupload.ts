@@ -59,7 +59,6 @@ router.post('/', (req: Request, res: Response, next) => {
             // next(new Error("No files selected"));
             return;
         }
-        // TODO try to send string as param
         const height = Number(fields.height);
         const width = Number(fields.width);
         const previews = Number(fields.previews);

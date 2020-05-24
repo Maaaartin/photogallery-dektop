@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Grid, Col, Row } from 'react-styled-flexboxgrid';
 import styled from 'styled-components';
+
 import { MainWindowProps, MainWindowState } from '../interfaces';
 import { IpcMessage } from '../constants';
 
@@ -29,7 +30,7 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
         const { ipc } = this.props;
 
         this.state = {
-            port: 80,
+            setPort: 80,
             status: '',
             runnning: false
         };
@@ -39,47 +40,46 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
         })
     }
 
+    handleBrowserClick = () => {
+        const { ipc } = this.props;
+        ipc.send(IpcMessage.OPEN_BROWSER);
+    }
+
     handleChangeClick = () => {
         const { ipc } = this.props;
-        const { port } = this.state;
-        ipc.send(IpcMessage.CHANGE_PORT, { port });
+        const { setPort } = this.state;
+        ipc.send(IpcMessage.CHANGE_PORT, { setPort });
     }
 
-    handleStartClick = () => {
+    handleStopStartClick = () => {
         const { ipc } = this.props;
-        ipc.send(IpcMessage.START_SERVER);
-    }
-
-    handleStopClick = () => {
-        const { ipc } = this.props;
-        ipc.send(IpcMessage.STOP_SERVER);
+        const { runnning } = this.state;
+        ipc.send(runnning ? IpcMessage.STOP_SERVER : IpcMessage.START_SERVER);
     }
 
     render() {
-        const { port, status, runnning } = this.state
+        const { setPort, servePort, status, runnning } = this.state;
+        const rowStyle: React.CSSProperties = { marginBottom: '30px', textAlign: 'center' };
         return (
             <Grid>
-                <Row>
-                    <Col xs={6}><span>{`Server running: ${runnning}`}</span></Col>
+                <Row style={rowStyle}>
+                    <Col xs={6}><span>{runnning ? `Server running on port ${servePort}` : 'Server not running'}</span></Col>
                     <Col xs={6}>
                         <span>{status}</span>
                     </Col>
                 </Row>
-                <Row>
-                    <Col xs={6}>
+                <Row center='xs' style={rowStyle}>
+                    <Col xs={12}>
                         <label >Port: </label>
-                    </Col>
-                    <Col xs={6}>
-                        <input type='number' value={port} onChange={e => this.setState({ port: Number(e.target.value) })} />
+                        <input type='number' value={setPort} onChange={e => this.setState({ setPort: Number(e.target.value) })} />
                     </Col>
                 </Row>
                 <Row>
                     <Col xs={4}>
                         <Button type='button' onClick={this.handleChangeClick}>change</Button>
-                        {/* <button type='button' onClick={this.handleChangeClick}>change</button> */}
                     </Col>
-                    <Col xs={4}><Button type='button' onClick={this.handleStopClick}>stop</Button></Col>
-                    <Col xs={4}><Button type='button' onClick={this.handleStartClick}>start</Button></Col>
+                    <Col xs={4}><Button type='button' onClick={this.handleStopStartClick}>{runnning ? 'stop' : 'start'}</Button></Col>
+                    <Col xs={4}><Button type='button' onClick={this.handleBrowserClick}>open browser</Button></Col>
                 </Row>
             </Grid>
         );
