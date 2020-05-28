@@ -6,30 +6,48 @@ import { default as express } from './server';
 import { MainWindowState } from '../interfaces';
 import { isDevelopment, IpcMessage } from '../constants';
 
-// https://github.com/danzel/electron-compile-builder-typescript-example
-
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow;
 let server: Server;
 
+/**
+ * Opens default browser on localhost and appropriate port
+ */
 function openBrowser() {
   open(`http://localhost:${server.address().port}`);
 }
 
+/**
+ * Sends data to main window
+ * @param channel Channel type
+ * @param message Message content
+ */
 function send(channel: IpcMessage, message: MainWindowState): void {
   if (mainWindow) mainWindow.webContents.send(channel, message);
 };
 
+/**
+ * Handles server creation success
+ * @param result Created server instance
+ * @param message Message to be sent to main window
+ */
 function serverSuccessHandler(result: Server, message: string): void {
   server = result;
   send(IpcMessage.UPDATE_STATUS, { status: message, runnning: true, servePort: server.address().port });
 }
 
+/**
+ * Handles server creation error
+ */
 function serverErrorHandler(err: Error): void {
   server = null;
   send(IpcMessage.UPDATE_STATUS, { status: `Error: ${err.message}`, runnning: false });
 }
 
+/**
+ * Creates new http server instance running on @param port
+ * @param port Server port number
+ */
 function createServer(port?: number): Promise<Server> {
   return new Promise((resolve, reject) => {
     if (port) express.set('port', port);
@@ -44,6 +62,9 @@ function createServer(port?: number): Promise<Server> {
   });
 };
 
+/**
+ * Creates new BrowserWindow instance
+ */
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 600,
@@ -53,6 +74,8 @@ function createMainWindow(): BrowserWindow {
   });
 
   // window.webContents.openDevTools();
+
+  window.setMenu(null);
 
   window.loadFile('src/frontend/index.html');
 
@@ -113,13 +136,13 @@ function createMainWindow(): BrowserWindow {
 
 // Force Single Instance Application
 const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
-  // Someone tried to run a second instance, we should focus our window.
+  // If minimized, gets restored
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   }
 })
-console.log(shouldQuit);
+
 if (shouldQuit) {
   app.quit();
 }
@@ -149,4 +172,3 @@ app.on('ready', () => {
     })
     .catch(serverErrorHandler);
 });
-

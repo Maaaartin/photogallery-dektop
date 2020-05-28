@@ -1,27 +1,17 @@
 import { Router, Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Index, TitleReq, NameReq } from '../../interfaces';
-import { dirName } from '../../constants';
 import * as Promise from 'bluebird';
 import { imageSize } from 'image-size';
 
-// TODO better resizing
+import { TitleReq, NameReq } from '../../interfaces';
+import { dirName } from '../../constants';
+
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => {
-    res.send('hello');
-});
-
-router.get('/delete', (req: Request, res: Response) => {
-    const files = fs.readdirSync(dirName);
-    for (let file of files) {
-        try { fs.unlinkSync(path.join(dirName, file)); }
-        catch (e) { console.log(e.message); }
-    }
-    res.redirect('/');
-});
-
+/**
+ * API endpoint for images
+ */
 router.get('/img', (req: Request, res: Response) => {
     try {
         const galleries = fs.readdirSync(dirName)
@@ -33,6 +23,10 @@ router.get('/img', (req: Request, res: Response) => {
     }
 });
 
+
+/**
+ * Endpoint for reading content of specified gallery
+ */
 router.get('/img/:title', (req: TitleReq, res: Response) => {
     const title = req.params.title;
     try {
@@ -55,6 +49,9 @@ router.get('/img/:title', (req: TitleReq, res: Response) => {
     }
 });
 
+/**
+ * Endpoint for deleting of specified gallery
+ */
 router.get('/img/delete/:title', (req: TitleReq, res: Response) => {
     const title = req.params.title;
     const folder = path.join(dirName, title);
@@ -83,7 +80,9 @@ router.get('/img/delete/:title', (req: TitleReq, res: Response) => {
     }
 });
 
-// TODO send base64 images + read sizes in frontend
+/**
+ * Endpoint getting specified image in specified gallery
+ */
 router.get('/img/:title/:name', (req: NameReq, res: Response) => {
     const { title, name } = req.params;
     try {
@@ -94,11 +93,6 @@ router.get('/img/:title/:name', (req: NameReq, res: Response) => {
         console.log(e.message);
         res.status(404).send({ code: 404, message: `Folder ${title} does not exist` });
     }
-});
-
-// Redirects to gallery page
-router.post('/showcurrent', (req: Request, res: Response) => {
-    res.redirect('/fileupload/' + 10);
 });
 
 export default router;

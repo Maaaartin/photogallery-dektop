@@ -6,6 +6,7 @@ import * as  bodyParser from 'body-parser';
 import * as path from 'path';
 import { dirName } from '../constants';
 
+// creates img dir for storing galleries
 if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName);
 }
@@ -18,7 +19,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 const buildFolder = express.static(path.join(__dirname, 'public'));
-// TODO manage routes, get rid of old frontend
+
 app.use('/api', index);
 app.use('/fileupload', fileupload);
 app.use('/', buildFolder);

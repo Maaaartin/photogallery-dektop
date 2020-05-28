@@ -4,15 +4,30 @@ import * as Jimp from 'jimp';
 import { File, Files, IncomingForm } from 'formidable';
 import * as Promise from 'bluebird';
 import * as _ from 'lodash';
-import { Gallery, CountRequest, UploadFormFields, NameJimp } from '../../interfaces';
-import { dirName } from '../../constants';
 import * as path from 'path';
 
+import { UploadFormFields, NameJimp } from '../../interfaces';
+import { dirName } from '../../constants';
+
 const router = Router();
-// TODO check unused modules
-function modifyCollection(data: File[], width: number, height: number, title: string): Promise<NameJimp[]> {
+
+function deleteFile(folderPath: string, fileName: string, attribute: string): void {
+    try { fs.unlinkSync(path.join(folderPath, fileName)); }
+    catch (e) { console.log(e.message); }
+    throw new Error(`${attribute} for ${fileName} is not valid, image not saved`);
+}
+
+/**
+ * Modifies image files and saves them
+ * @param data Array of files to be modified
+ * @param width width in pixels
+ * @param height height in pixels
+ * @param title gallery name
+ * @returns modified files
+ */
+function modifyCollection(data: File[], width: number, height: number, x: number, y: number, title: string): Promise<NameJimp[]> {
     return Promise.map(data, value => {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const folderPath = path.join(dirName, title);
             const oldpath = value.path;
             const newpath = path.join(folderPath, value.name); // dirName + value.name;
@@ -24,8 +39,31 @@ function modifyCollection(data: File[], width: number, height: number, title: st
                 .then((image: NameJimp) => {
                     image.name = value.name;
                     if (height && width) {
+                        const imgWidth = image.getWidth();
+                        const imgHeight = image.getHeight();
+
+                        if (height > imgHeight) {
+                            deleteFile(folderPath, image.name, 'Height');
+                        }
+
+                        if (width > imgWidth) {
+                            deleteFile(folderPath, image.name, 'Width');
+                        }
+
+                        const xOffset = x || (imgWidth - width) / 2;
+                        const yOffset = y || (imgHeight - height) / 2;
+
+                        if (xOffset + width > imgWidth) {
+                            deleteFile(folderPath, image.name, 'Horizontal offset');
+                        }
+
+                        if (yOffset + width > imgWidth) {
+                            deleteFile(folderPath, image.name, 'Vertical offset');
+                        }
+
                         image
-                            .resize(width, height) // resize
+                            .cropQuiet(xOffset, yOffset, width, height)
+                            // .resize(width, height) // resize
                             // .write(dirName + image.name); // save
                             .write(path.join(dirName, title, image.name));
                     }
@@ -33,15 +71,17 @@ function modifyCollection(data: File[], width: number, height: number, title: st
                     resolve(image);
                 })
                 .catch((err) => {
-                    console.log(err);
+                    reject(err);
+                    console.log(err.message);
                 });
         });
-    })
+    });
 }
 
-// TODO fix resizing
-// Handles files uploads
-router.post('/', (req: Request, res: Response, next) => {
+/**
+ * Handles files uploads
+ */
+router.post('/', (req: Request, res: Response) => {
     // moves image from temporal folder to server folder
     const form = new IncomingForm();
     // Form may contain multiple files
@@ -49,22 +89,22 @@ router.post('/', (req: Request, res: Response, next) => {
     form.parse(req, function (err: Error, fields: UploadFormFields, files: Files) {
         // Contains actual uploaded files
         if (err) {
-            // next(err);
             res.status(500).send(err);
             return;
         }
         const data = (files.filetoupload instanceof Array) ? <File[]>files.filetoupload : [files.filetoupload];
         if (_.isEmpty(data)) {
-            res.status(500).send(new Error("No files selected"));
-            // next(new Error("No files selected"));
+            res.status(500).send("No files selected");
             return;
         }
         const height = Number(fields.height);
         const width = Number(fields.width);
         const previews = Number(fields.previews);
+        const x = Number(fields.x);
+        const y = Number(fields.y);
         const title = fields.title;
 
-        modifyCollection(data, width, height, title)
+        modifyCollection(data, width, height, x, y, title)
             .then(images => {
                 const files = images.map(item => ({
                     name: item.name,
@@ -74,27 +114,9 @@ router.post('/', (req: Request, res: Response, next) => {
                 res.status(200).send({ files, previews });
             })
             .catch((err) => {
-                console.log(err);
-                res.status(500).send(err);
+                res.status(500).send(err.message);
             });
     });
-});
-
-// Provides gallery page
-router.get('/:count', (req: CountRequest, res: Response, next) => {
-    const count = req.params.count;
-    if (!count || count < 1) {
-        next(new Error("Invalid previews count"));
-        return;
-    }
-    const files = fs.readdirSync('./' + dirName);
-    // adjust the file path
-    // handlebars require base64 data format
-    // files.forEach((value, index, files) => {
-    //     files[index] = (base64Img.base64Sync(dirName + value));
-    // });
-    const galleryFiles: Gallery = { files };
-    res.render('gallery', { ...galleryFiles });
 });
 
 export default router;

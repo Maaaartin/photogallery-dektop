@@ -9,7 +9,7 @@
     "start": "npm run pre-pack && electron .",
     "pre-pack": "electron-compile --appDir . ./src",
     "package": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "npm run pre-pack && electron-builder"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
