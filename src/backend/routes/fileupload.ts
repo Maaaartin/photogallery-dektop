@@ -5,16 +5,21 @@ import { File, Files, IncomingForm } from 'formidable';
 import * as Promise from 'bluebird';
 import * as _ from 'lodash';
 import * as path from 'path';
+import { GifUtil, GifError } from 'gifwrap';
 
 import { UploadFormFields, NameJimp } from '../../interfaces';
 import { dirName } from '../../constants';
 
 const router = Router();
 
-function deleteFile(folderPath: string, fileName: string, attribute: string): void {
+function deleteFile(folderPath: string, fileName: string, attribute?: string): void {
     try { fs.unlinkSync(path.join(folderPath, fileName)); }
     catch (e) { console.log(e.message); }
-    throw new Error(`${attribute} for ${fileName} is not valid, image not saved`);
+    if (fs.existsSync(folderPath)) {
+        const files = fs.readdirSync(folderPath);
+        if (_.isEmpty(files)) fs.rmdirSync(folderPath);
+    }
+    if (attribute) throw new Error(`${attribute} for ${fileName} is not valid, image not saved`);
 }
 
 /**
@@ -25,7 +30,7 @@ function deleteFile(folderPath: string, fileName: string, attribute: string): vo
  * @param title gallery name
  * @returns modified files
  */
-function modifyCollection(data: File[], width: number, height: number, x: number, y: number, title: string): Promise<NameJimp[]> {
+function modifyCollection(data: File[], width: number, height: number, x: number, y: number, title: string): Promise<any[]> {
     return Promise.map(data, value => {
         return new Promise((resolve, reject) => {
             const folderPath = path.join(dirName, title);
@@ -35,7 +40,53 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                 fs.mkdirSync(path.join(dirName, title));
             }
             fs.renameSync(oldpath, newpath);
-            Jimp.read(newpath)
+            if (path.extname(value.name) === '.gif') {
+                GifUtil.read(newpath)
+                    .then((image) => {
+                        if (height && width) {
+                            const imgWidth = image.width;
+                            const imgHeight = image.height;
+
+                            if (height >= imgHeight) {
+                                deleteFile(folderPath, value.name, 'Height');
+                            }
+
+                            if (width >= imgWidth) {
+                                deleteFile(folderPath, value.name, 'Width');
+                            }
+
+                            const xOffset = x || (imgWidth - width) / 2;
+                            const yOffset = y || (imgHeight - height) / 2;
+
+                            if (xOffset + width >= imgWidth) {
+                                deleteFile(folderPath, value.name, 'Horizontal offset');
+                            }
+
+                            if (yOffset + width >= imgWidth) {
+                                deleteFile(folderPath, value.name, 'Vertical offset');
+                            }
+
+                            for (const frame of image.frames) {
+                                frame.reframe(xOffset, yOffset, width, height);
+                            }
+                            GifUtil.write(newpath, image.frames, image).then(outputGif => {
+                                console.log("modified");
+                                resolve({ name: value.name, bitmap: { width: image.width, height: image.height } });
+                            })
+                                .catch((err) => {
+                                    deleteFile(folderPath, value.name);
+                                    reject(err);
+                                });
+                        }
+
+                        resolve({ name: value.name, bitmap: { width: image.width, height: image.height } });
+                    }).catch((err) => {
+                        console.log('Gif error');
+                        deleteFile(folderPath, value.name);
+                        reject(err);
+                    });
+            }
+            else Jimp.read(newpath)
                 .then((image: NameJimp) => {
                     image.name = value.name;
                     if (height && width) {
@@ -65,14 +116,16 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                             .cropQuiet(xOffset, yOffset, width, height)
                             // .resize(width, height) // resize
                             // .write(dirName + image.name); // save
-                            .write(path.join(dirName, title, image.name));
+                            .write(path.join(dirName, title, image.name))
                     }
 
                     resolve(image);
                 })
                 .catch((err) => {
-                    reject(err);
+                    console.log('Jimp Error');
                     console.log(err.message);
+                    deleteFile(folderPath, value.name);
+                    reject(err);
                 });
         });
     });

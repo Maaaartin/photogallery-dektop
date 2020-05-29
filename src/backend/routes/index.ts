@@ -23,7 +23,6 @@ router.get('/img', (req: Request, res: Response) => {
     }
 });
 
-
 /**
  * Endpoint for reading content of specified gallery
  */
@@ -49,12 +48,24 @@ router.get('/img/:title', (req: TitleReq, res: Response) => {
     }
 });
 
+router.get('/delete/:title/:name', (req: NameReq, res: Response) => {
+    const { title, name } = req.params;
+    try {
+        fs.unlink(path.join(dirName, title, name));
+        res.status(200).send(`File ${name} from folder ${title} was deleted`);
+    }
+    catch (e) {
+        res.status(500).send(`Could not delete ${name} from folder ${title}`);
+    }
+});
+
 /**
  * Endpoint for deleting of specified gallery
  */
-router.get('/img/delete/:title', (req: TitleReq, res: Response) => {
+router.get('/delete/:title', (req: TitleReq, res: Response) => {
     const title = req.params.title;
     const folder = path.join(dirName, title);
+    console.log('delete folder');
     try {
         const files = fs.readdirSync(folder);
         Promise.map(files, (file) => {
@@ -84,6 +95,7 @@ router.get('/img/delete/:title', (req: TitleReq, res: Response) => {
  * Endpoint getting specified image in specified gallery
  */
 router.get('/img/:title/:name', (req: NameReq, res: Response) => {
+    console.log('/img/:title/:name');
     const { title, name } = req.params;
     try {
         const images = fs.readFileSync(path.join(dirName, title, name));
