@@ -51,7 +51,7 @@ function serverErrorHandler(err: Error): void {
 function createServer(port?: number): Promise<Server> {
   return new Promise((resolve, reject) => {
     if (port) express.set('port', port);
-    const newServer = express.listen(express.get('port'), () => {
+    const newServer = express.listen(express.get('port'), 'localhost', () => {
       console.log('Express server listening on port ' + express.get('port'));
       resolve(newServer);
     });

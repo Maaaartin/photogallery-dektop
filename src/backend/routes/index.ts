@@ -50,11 +50,13 @@ router.get('/img/:title', (req: TitleReq, res: Response) => {
 
 router.get('/delete/:title/:name', (req: NameReq, res: Response) => {
     const { title, name } = req.params;
+    console.log('delete file');
     try {
-        fs.unlink(path.join(dirName, title, name));
+        fs.unlinkSync(path.join(dirName, title, name));
         res.status(200).send(`File ${name} from folder ${title} was deleted`);
     }
     catch (e) {
+        console.log('caught delete file error');
         res.status(500).send(`Could not delete ${name} from folder ${title}`);
     }
 });
