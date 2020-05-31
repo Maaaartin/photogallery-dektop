@@ -4,11 +4,15 @@ import index from './routes/index';
 import fileupload from './routes/fileupload';
 import * as  bodyParser from 'body-parser';
 import * as path from 'path';
-import { dirName } from '../constants';
+import { dirName, tmpDir } from '../constants';
 
 // creates img dir for storing galleries
 if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName);
+}
+
+if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir);
 }
 
 const app = express();

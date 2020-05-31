@@ -14,7 +14,10 @@ const router = Router();
 
 function deleteFile(folderPath: string, fileName: string, attribute?: string): void {
     try { fs.unlinkSync(path.join(folderPath, fileName)); }
-    catch (e) { console.log(e.message); }
+    catch (e) {
+        console.log('error1');
+        console.log(e.message);
+    }
     if (fs.existsSync(folderPath)) {
         const files = fs.readdirSync(folderPath);
         if (_.isEmpty(files)) fs.rmdirSync(folderPath);
@@ -48,22 +51,22 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                             const imgHeight = image.height;
 
                             if (height >= imgHeight) {
-                                deleteFile(folderPath, value.name, 'Height');
+                                return deleteFile(folderPath, value.name, 'Height');
                             }
 
                             if (width >= imgWidth) {
-                                deleteFile(folderPath, value.name, 'Width');
+                                return deleteFile(folderPath, value.name, 'Width');
                             }
 
                             const xOffset = x || (imgWidth - width) / 2;
                             const yOffset = y || (imgHeight - height) / 2;
 
-                            if (xOffset + width >= imgWidth) {
-                                deleteFile(folderPath, value.name, 'Horizontal offset');
+                            if (xOffset + width > imgWidth) {
+                                return deleteFile(folderPath, value.name, 'Horizontal offset');
                             }
 
-                            if (yOffset + width >= imgWidth) {
-                                deleteFile(folderPath, value.name, 'Vertical offset');
+                            if (yOffset + height > imgHeight) {
+                                return deleteFile(folderPath, value.name, 'Vertical offset');
                             }
 
                             for (const frame of image.frames) {
@@ -74,6 +77,7 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                                 resolve({ name: value.name, bitmap: { width: image.width, height: image.height } });
                             })
                                 .catch((err) => {
+                                    console.log('error1');
                                     deleteFile(folderPath, value.name);
                                     reject(err);
                                 });
@@ -93,23 +97,23 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                         const imgWidth = image.getWidth();
                         const imgHeight = image.getHeight();
 
-                        if (height > imgHeight) {
-                            deleteFile(folderPath, image.name, 'Height');
+                        if (height >= imgHeight) {
+                            return deleteFile(folderPath, image.name, 'Height');
                         }
 
-                        if (width > imgWidth) {
-                            deleteFile(folderPath, image.name, 'Width');
+                        if (width >= imgWidth) {
+                            return deleteFile(folderPath, image.name, 'Width');
                         }
 
                         const xOffset = x || (imgWidth - width) / 2;
                         const yOffset = y || (imgHeight - height) / 2;
 
                         if (xOffset + width > imgWidth) {
-                            deleteFile(folderPath, image.name, 'Horizontal offset');
+                            return deleteFile(folderPath, image.name, 'Horizontal offset');
                         }
 
-                        if (yOffset + width > imgWidth) {
-                            deleteFile(folderPath, image.name, 'Vertical offset');
+                        if (yOffset + height > imgHeight) {
+                            return deleteFile(folderPath, image.name, 'Vertical offset');
                         }
 
                         image
@@ -167,6 +171,7 @@ router.post('/', (req: Request, res: Response) => {
                 res.status(200).send({ files, previews });
             })
             .catch((err) => {
+                console.log('error2');
                 res.status(500).send(err.message);
             });
     });
