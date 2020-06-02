@@ -30,6 +30,8 @@ function deleteFile(folderPath: string, fileName: string, attribute?: string): v
  * @param data Array of files to be modified
  * @param width width in pixels
  * @param height height in pixels
+ * @param x horizontal  offset
+ * @param y vertical offset
  * @param title gallery name
  * @returns modified files
  */
@@ -43,6 +45,9 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                 fs.mkdirSync(path.join(dirName, title));
             }
             fs.renameSync(oldpath, newpath);
+            // tiff not supported
+            if (path.extname(value.name) === '.tiff') throw new Error('Unsupported format');
+            // gif requires special handling
             if (path.extname(value.name) === '.gif') {
                 GifUtil.read(newpath)
                     .then((image) => {
@@ -118,7 +123,6 @@ function modifyCollection(data: File[], width: number, height: number, x: number
 
                         image
                             .cropQuiet(xOffset, yOffset, width, height)
-                            // .resize(width, height) // resize
                             // .write(dirName + image.name); // save
                             .write(path.join(dirName, title, image.name))
                     }

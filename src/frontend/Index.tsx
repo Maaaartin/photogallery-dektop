@@ -58,8 +58,9 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
     }
 
     render() {
-        const { setPort, servePort, status, runnning } = this.state;
+        const { setPort, servePort, status, runnning, disable } = this.state;
         const rowStyle: React.CSSProperties = { marginBottom: '30px', textAlign: 'center' };
+        const buttonStyle: React.CSSProperties = disable ? { backgroundColor: 'grey', cursor: 'not-allowed' } : {};
         return (
             <Grid>
                 <Row style={rowStyle}>
@@ -76,10 +77,20 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
                 </Row>
                 <Row>
                     <Col xs={4}>
-                        <Button type='button' onClick={this.handleChangeClick}>change</Button>
+                        <Button style={buttonStyle} type='button' onClick={!disable && this.handleChangeClick}>change</Button>
                     </Col>
-                    <Col xs={4}><Button type='button' onClick={this.handleStopStartClick}>{runnning ? 'stop' : 'start'}</Button></Col>
-                    <Col xs={4}><Button type='button' onClick={this.handleBrowserClick}>open browser</Button></Col>
+                    <Col xs={4}><Button
+                        style={buttonStyle}
+                        type='button'
+                        onClick={!disable && this.handleStopStartClick}>{runnning ? 'stop' : 'start'}
+                    </Button>
+                    </Col>
+                    <Col xs={4}>
+                        <Button
+                            style={buttonStyle}
+                            type='button'
+                            onClick={!disable && this.handleBrowserClick}>open browser</Button>
+                    </Col>
                 </Row>
             </Grid>
         );

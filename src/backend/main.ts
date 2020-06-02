@@ -14,7 +14,7 @@ let server: Server;
  * Opens default browser on localhost and appropriate port
  */
 function openBrowser() {
-  open(`http://localhost:${server.address().port}`);
+  if (server) open(`http://localhost:${server.address().port}`);
 }
 
 /**
@@ -33,7 +33,7 @@ function send(channel: IpcMessage, message: MainWindowState): void {
  */
 function serverSuccessHandler(result: Server, message: string): void {
   server = result;
-  send(IpcMessage.UPDATE_STATUS, { status: message, runnning: true, servePort: server.address().port });
+  send(IpcMessage.UPDATE_STATUS, { status: message, runnning: true, servePort: server.address().port, disable: false });
 }
 
 /**
@@ -41,7 +41,7 @@ function serverSuccessHandler(result: Server, message: string): void {
  */
 function serverErrorHandler(err: Error): void {
   server = null;
-  send(IpcMessage.UPDATE_STATUS, { status: `Error: ${err.message}`, runnning: false });
+  send(IpcMessage.UPDATE_STATUS, { status: `Error: ${err.message}`, runnning: false, disable: false });
 }
 
 /**
@@ -83,7 +83,8 @@ function createMainWindow(): BrowserWindow {
     send(IpcMessage.UPDATE_STATUS, {
       status: server ? 'Server started' : 'Server not running',
       runnning: !!server,
-      servePort: server && server.address().port
+      servePort: server && server.address().port,
+      disable: false
     });
   });
 
@@ -98,6 +99,8 @@ function createMainWindow(): BrowserWindow {
   });
 
   ipcMain.on(IpcMessage.CHANGE_PORT, (event, data: MainWindowState) => {
+    console.log('Changing port');
+    send(IpcMessage.UPDATE_STATUS, { status: 'Applying changes, please wait', disable: true });
     if (server) {
       server.close(() => {
         console.log('Server closed');
@@ -110,6 +113,7 @@ function createMainWindow(): BrowserWindow {
   });
 
   ipcMain.on(IpcMessage.START_SERVER, (event, data: MainWindowState | undefined) => {
+    send(IpcMessage.UPDATE_STATUS, { status: 'Starting server, please wait', disable: true });
     if (!server) {
       createServer()
         .then(result => serverSuccessHandler(result, 'Server started'))
@@ -118,11 +122,13 @@ function createMainWindow(): BrowserWindow {
   });
 
   ipcMain.on(IpcMessage.STOP_SERVER, (event, data: MainWindowState) => {
+    console.log('Stopping server');
+    send(IpcMessage.UPDATE_STATUS, { status: 'Stopping server, please wait', disable: true });
     if (server) {
       server.close(() => {
         console.log('Server closed');
         server = null;
-        send(IpcMessage.UPDATE_STATUS, { status: 'Server stopped', runnning: false });
+        send(IpcMessage.UPDATE_STATUS, { status: 'Server stopped', runnning: false, disable: false });
       });
     }
   });

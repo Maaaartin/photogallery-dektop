@@ -45,5 +45,6 @@ export interface MainWindowState {
     setPort?: number,
     servePort?: number,
     status?: string,
-    runnning?: boolean
+    runnning?: boolean,
+    disable?: boolean
 }
