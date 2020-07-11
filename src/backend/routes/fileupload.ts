@@ -5,25 +5,13 @@ import { File, Files, IncomingForm } from 'formidable';
 import * as Promise from 'bluebird';
 import * as _ from 'lodash';
 import * as path from 'path';
-import { GifUtil, GifError } from 'gifwrap';
+import { GifUtil } from 'gifwrap';
 
+import { deleteFile, deleteGallery } from '../file-system';
 import { UploadFormFields, NameJimp } from '../../interfaces';
 import { dirName } from '../../constants';
 
 const router = Router();
-
-function deleteFile(folderPath: string, fileName: string, attribute?: string): void {
-    try { fs.unlinkSync(path.join(folderPath, fileName)); }
-    catch (e) {
-        console.log('error1');
-        console.log(e.message);
-    }
-    if (fs.existsSync(folderPath)) {
-        const files = fs.readdirSync(folderPath);
-        if (_.isEmpty(files)) fs.rmdirSync(folderPath);
-    }
-    if (attribute) throw new Error(`${attribute} for ${fileName} is not valid, image not saved`);
-}
 
 /**
  * Modifies image files and saves them
@@ -41,14 +29,18 @@ function modifyCollection(data: File[], width: number, height: number, x: number
             const folderPath = path.join(dirName, title);
             const oldpath = value.path;
             const newpath = path.join(folderPath, value.name); // dirName + value.name;
+            const extName = path.extname(value.name);
             if (!fs.existsSync(folderPath)) {
                 fs.mkdirSync(path.join(dirName, title));
             }
             fs.renameSync(oldpath, newpath);
             // tiff not supported
-            if (path.extname(value.name) === '.tiff') throw new Error('Unsupported format');
+            if (extName === '.tiff') {
+                deleteFile(folderPath, value.name);
+                throw new Error('TIFF is not supported');
+            };
             // gif requires special handling
-            if (path.extname(value.name) === '.gif') {
+            if (extName === '.gif') {
                 GifUtil.read(newpath)
                     .then((image) => {
                         if (height && width) {
@@ -92,6 +84,7 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                     }).catch((err) => {
                         console.log('Gif error');
                         deleteFile(folderPath, value.name);
+                        // deleteGallery(title);
                         reject(err);
                     });
             }
@@ -123,7 +116,6 @@ function modifyCollection(data: File[], width: number, height: number, x: number
 
                         image
                             .cropQuiet(xOffset, yOffset, width, height)
-                            // .write(dirName + image.name); // save
                             .write(path.join(dirName, title, image.name))
                     }
 
@@ -133,6 +125,7 @@ function modifyCollection(data: File[], width: number, height: number, x: number
                     console.log('Jimp Error');
                     console.log(err.message);
                     deleteFile(folderPath, value.name);
+                    // deleteGallery(title);
                     reject(err);
                 });
         });
