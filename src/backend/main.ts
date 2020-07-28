@@ -68,7 +68,7 @@ function createServer(port?: number): Promise<Server> {
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 600,
-    height: 240,
+    height: 200,
     maximizable: false,
     resizable: false
   });

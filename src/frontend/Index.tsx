@@ -60,7 +60,7 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
     render() {
         const { setPort, servePort, status, runnning, disable } = this.state;
         const rowStyle: React.CSSProperties = { marginBottom: '30px', textAlign: 'center' };
-        const buttonStyle: React.CSSProperties = disable ? { backgroundColor: 'grey', cursor: 'not-allowed' } : {};
+        const buttonStyle: React.CSSProperties = disable ? { backgroundColor: 'grey', cursor: 'not-allowed' } : { width: '100%' };
         return (
             <Grid>
                 <Row style={rowStyle}>
@@ -69,14 +69,14 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
                         <span>{status}</span>
                     </Col>
                 </Row>
-                <Row center='xs' style={rowStyle}>
+                {/* <Row center='xs' style={rowStyle}>
                     <Col xs={12}>
                         <label >Port: </label>
                         <input type='number' value={setPort} onChange={e => this.setState({ setPort: Number(e.target.value) })} />
                     </Col>
-                </Row>
+                </Row> */}
                 <Row>
-                    <Col xs={4}>
+                    {/* <Col xs={4}>
                         <Button style={buttonStyle} type='button' onClick={!disable && this.handleChangeClick}>change</Button>
                     </Col>
                     <Col xs={4}><Button
@@ -84,8 +84,8 @@ class Index extends React.Component<MainWindowProps, MainWindowState>{
                         type='button'
                         onClick={!disable && this.handleStopStartClick}>{runnning ? 'stop' : 'start'}
                     </Button>
-                    </Col>
-                    <Col xs={4}>
+                    </Col> */}
+                    <Col xs={12}>
                         <Button
                             style={buttonStyle}
                             type='button'
